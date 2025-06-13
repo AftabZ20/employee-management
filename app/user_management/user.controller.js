@@ -26,6 +26,21 @@ exports.editUser = async (req, res) => {
   const { userId } = req.query;
   const userData = req.body;
 
+  if (req?.role != "admin" && userData.role)
+    return res.status(403).json({
+      status: false,
+      message: "Only ADMIN can change the role",
+      code: 403,
+    });
+  if (userData.role) {
+    if (!["admin", "employee", "manager"].includes(userData.role))
+      return res.status(400).json({
+        status: false,
+        code: 400,
+        message: "role can only be admin, employee or manager",
+      });
+  }
+  
   try {
     const user = await userService.editUser({ userId, userData });
     return res.status(user.code).json(user);
