@@ -30,8 +30,15 @@ exports.verifyUserId = (req, res, next) => {
       .json({ status: false, code: 400, message: "userId is required" });
 
   next();
-  try {
-  } catch (error) {
-    return res.status(500).json({ status: false, message: error.message });
-  }
+};
+
+exports.verifySignIn = (req, res, next) => {
+  const { email, password } = req.body;
+
+  if (!email || !password)
+    return res
+      .status(400)
+      .json({ status: false, code: 400, message: "email & password required" });
+
+  next();
 };

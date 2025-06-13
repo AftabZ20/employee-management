@@ -2,6 +2,7 @@ const { cache } = require("../../configs/cache-config");
 const { generateToken } = require("../../utils");
 const userModel = require("./user.model");
 const bcrypt = require("bcrypt");
+const { parsedUser } = require("../../sanitizers/user.sanitizers");
 
 exports.createUser = async (userData) => {
   //first check if the email is already under use, if yes, then return error message
@@ -30,6 +31,46 @@ exports.createUser = async (userData) => {
   };
 };
 
+exports.signIn = async ({ email, password }) => {
+  //check if the user exists
+  const userFound = await userModel.findOne({ email });
+  if (!userFound)
+    return {
+      code: 404,
+      status: false,
+      message: "User this email does not exist",
+    };
+
+  if (userFound.isDeleted == true)
+    return {
+      code: 404,
+      status: false,
+      message:
+        "This account has been deleted, kindly contact admin for support",
+    };
+
+  //check if the provided password matches with the stored password
+  const isPasswordValid = await bcrypt.compare(password, userFound.password);
+  if (!isPasswordValid)
+    return { code: 401, status: false, message: "Invalid Password provided" };
+
+  const parsedData = parsedUser(userFound);
+
+  const cacheKey = `user_id_:${userFound.id}`;
+  cache.set(cacheKey, parsedData);
+
+  return {
+    code: 200,
+    status: true,
+    message: "signed in successfully",
+    user: parsedData,
+    token: generateToken({
+      userId: userFound.id,
+      role: userFound.role,
+      email: userFound.email,
+    }),
+  };
+};
 exports.findUserByEmail = async ({
   email,
   attributeList = ["userId", "name", "email", "role"],
@@ -99,5 +140,50 @@ exports.findUserById = async ({
     status: true,
     message: "User found successfully",
     user: userExists,
+  };
+};
+
+exports.editUser = async ({ userId, userData }) => {
+  // Step 1: Use findUserById to check if user exists
+  const userFound = await this.findUserById({
+    userId,
+  });
+
+  if (!userFound.status) {
+    return userFound;
+  }
+
+  // Step 2: Sanitize userData (e.g., prevent updating password/id/email)
+  const protectedFields = ["password", "_id", "id"];
+  protectedFields.forEach((field) => delete userData[field]);
+
+  if (userData.email) {
+    const emailExists = await this.findUserByEmail({ email: userData.email });
+    if (emailExists.status)
+      return {
+        code: 409,
+        status: false,
+        message: "A user is already registered with this email",
+      };
+  }
+
+  // Step 3: Perform the update
+  const updatedUser = await userModel.findOneAndUpdate(
+    { userId, isDeleted: false },
+    { $set: userData },
+    { new: true }
+  );
+
+  const cleanedUser = parsedUser(updatedUser);
+
+  // Step 4: Update cache
+  const cacheKey = `user_id_:${userId}`;
+  cache.set(cacheKey, cleanedUser);
+
+  return {
+    code: 200,
+    status: true,
+    message: "User updated successfully",
+    user: cleanedUser,
   };
 };
