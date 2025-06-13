@@ -4,13 +4,36 @@ const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 const router = express.Router();
 
-const verifyToken = require("../../main-middlewares/verify-token");
-const verifyAdminAccess = require("../../main-middlewares/admin-accessible");
+const { authenticateToken } = require("../../main-middlewares/verify-token");
+const {
+  checkAdminAccessibility,
+} = require("../../main-middlewares/admin-accessible");
+const {
+  checkUserAccessibility,
+} = require("../../main-middlewares/user-accessible");
 
 const userController = require("./user.controller");
-const { verifyUserSignUp, verifyUserId } = require("./user.middlewares");
+const {
+  verifyUserSignUp,
+  verifyUserId,
+  verifySignIn,
+} = require("./user.middlewares");
 
-router.post("/add", verifyToken.authenticateToken, verifyAdminAccess.checkAccessibility, verifyUserSignUp, userController.addUser);
+router.post(
+  "/add",
+  authenticateToken,
+  checkAdminAccessibility,
+  verifyUserSignUp,
+  userController.addUser
+);
 router.get("/userId/", verifyUserId, userController.getUserByID);
+router.put(
+  "/edit/userId",
+  authenticateToken,
+  checkUserAccessibility,
+  verifyUserId,
+  userController.editUser
+);
+router.post("/signIn", verifySignIn, userController.signIn);
 
 module.exports = router;

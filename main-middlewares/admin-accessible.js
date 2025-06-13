@@ -1,4 +1,4 @@
-exports.checkAccessibility = (req, res, next) => {
+exports.checkAdminAccessibility = (req, res, next) => {
   if (req?.role != "admin")
     return res.status(403).json({
       code: 403,

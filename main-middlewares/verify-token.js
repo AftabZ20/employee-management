@@ -12,10 +12,13 @@ exports.authenticateToken = (req, res, next) => {
 
   jwt.verify(token, process.env.JWT_SECRET_KEY, (err, data) => {
     if (err) {
-      return res.status(401).json({ code: 401, status: false, message: "Invalid token" });
+      return res
+        .status(401)
+        .json({ code: 401, status: false, message: "Invalid token" });
     }
 
     req.role = data.role;
+    req.userId = data.userId;
     next();
   });
 };
