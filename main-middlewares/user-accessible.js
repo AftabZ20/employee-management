@@ -4,7 +4,7 @@ exports.checkUserAccessibility = (req, res, next) => {
     return res.status(403).json({
       status: false,
       code: 403,
-      message: "You can update your OWN account",
+      message: "You do NOT have permission to perform this account",
     });
 
   next();

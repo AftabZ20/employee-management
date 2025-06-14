@@ -1,5 +1,5 @@
 const { cache } = require("../../configs/cache-config");
-const { generateToken } = require("../../utils");
+const { generateToken, getPagination } = require("../../utils");
 const userModel = require("./user.model");
 const bcrypt = require("bcrypt");
 const { parsedUser } = require("../../sanitizers/user.sanitizers");
@@ -185,5 +185,76 @@ exports.editUser = async ({ userId, userData }) => {
     status: true,
     message: "User updated successfully",
     user: cleanedUser,
+  };
+};
+
+exports.deleteUser = async ({ userId }) => {
+  const userFound = await this.findUserById({
+    userId,
+  });
+
+  if (!userFound.status) {
+    return userFound;
+  }
+
+  // Step 3: Perform the update
+  setImmediate(async () => {
+    try {
+      await userModel.findOneAndUpdate(
+        { userId, isDeleted: false },
+        { $set: { isDeleted: true } },
+        { new: true }
+      );
+
+      cache.del(`user_id_:${userId}`);
+      cache.del(`user_email_${userFound?.user?.email}`);
+    } catch (error) {
+      console.error("ERROR IN DELETING USER: ", error);
+    }
+  });
+
+  return {
+    code: 200,
+    status: true,
+    message: "User has been deleted",
+  };
+};
+
+exports.getUsers = async ({ page, limit, role, search }) => {
+  const { startIndex, pageNumber, pageSize } = getPagination({ page, limit });
+
+  const filters = {
+    isDeleted: false,
+  };
+
+  if (role) {
+    filters.role = role;
+  }
+
+  if (search) {
+    filters.$or = [
+      { name: { $regex: search, $options: "i" } },
+      { email: { $regex: search, $options: "i" } },
+    ];
+  }
+
+  const users = await userModel
+    .find(filters)
+    .skip(startIndex)
+    .limit(pageSize)
+    .select("userId name email role createdAt");
+
+  const totalUsers = await userModel.countDocuments(filters);
+
+  return {
+    code: 200,
+    status: true,
+    message: "Users fetched successfully",
+    users,
+    paginationData: {
+      total: totalUsers,
+      pageNumber: pageNumber,
+      totalPages: Math.ceil(totalUsers / pageSize),
+    },
   };
 };

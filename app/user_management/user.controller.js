@@ -40,7 +40,7 @@ exports.editUser = async (req, res) => {
         message: "role can only be admin, employee or manager",
       });
   }
-  
+
   try {
     const user = await userService.editUser({ userId, userData });
     return res.status(user.code).json(user);
@@ -55,6 +55,28 @@ exports.signIn = async (req, res) => {
   try {
     const signedIn = await userService.signIn({ email, password });
     return res.status(signedIn.code).json(signedIn);
+  } catch (error) {
+    return res.status(500).json({ status: false, message: error.message });
+  }
+};
+
+exports.deleteUser = async (req, res) => {
+  const { userId } = req.query;
+
+  try {
+    const user = await userService.deleteUser({ userId });
+    return res.status(user.code).json(user);
+  } catch (error) {
+    return res.status(500).json({ status: false, message: error.message });
+  }
+};
+
+exports.getUsers = async (req, res) => {
+  const { page = 1, limit = 10, role, search } = req.query;
+
+  try {
+    const users = await userService.getUsers({ page, limit, role, search });
+    return res.status(users.code).json(users);
   } catch (error) {
     return res.status(500).json({ status: false, message: error.message });
   }

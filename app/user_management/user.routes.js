@@ -35,5 +35,14 @@ router.put(
   userController.editUser
 );
 router.post("/signIn", verifySignIn, userController.signIn);
+router.delete(
+  "/delete/userId",
+  authenticateToken,
+  checkUserAccessibility,
+  verifyUserId,
+  userController.deleteUser
+);
+
+router.get("/", userController.getUsers);
 
 module.exports = router;
