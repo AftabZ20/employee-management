@@ -108,10 +108,10 @@ exports.findUserByEmail = async ({
 };
 
 exports.findUserById = async ({
-  userId,
+  id,
   attributeList = ["userId", "name", "email", "role"],
 }) => {
-  const cacheKey = `user_id_:${userId}`;
+  const cacheKey = `user_id_:${id}`;
   const cachedUser = cache.get(cacheKey);
 
   if (cachedUser) {
@@ -126,7 +126,7 @@ exports.findUserById = async ({
 
   const projection = attributeList.join(" ");
   const userExists = await userModel
-    .findOne({ userId, isDeleted: false })
+    .findOne({ _id: id, isDeleted: false })
     .select(projection);
 
   if (!userExists) {
@@ -143,10 +143,10 @@ exports.findUserById = async ({
   };
 };
 
-exports.editUser = async ({ userId, userData }) => {
+exports.editUser = async ({ id, userData }) => {
   // Step 1: Use findUserById to check if user exists
   const userFound = await this.findUserById({
-    userId,
+    id,
   });
 
   if (!userFound.status) {
@@ -169,7 +169,7 @@ exports.editUser = async ({ userId, userData }) => {
 
   // Step 3: Perform the update
   const updatedUser = await userModel.findOneAndUpdate(
-    { userId, isDeleted: false },
+    { _id: id, isDeleted: false },
     { $set: userData },
     { new: true }
   );
@@ -177,7 +177,7 @@ exports.editUser = async ({ userId, userData }) => {
   const cleanedUser = parsedUser(updatedUser);
 
   // Step 4: Update cache
-  const cacheKey = `user_id_:${userId}`;
+  const cacheKey = `user_id_:${id}`;
   cache.set(cacheKey, cleanedUser);
 
   return {
@@ -188,9 +188,9 @@ exports.editUser = async ({ userId, userData }) => {
   };
 };
 
-exports.deleteUser = async ({ userId }) => {
+exports.deleteUser = async ({ id }) => {
   const userFound = await this.findUserById({
-    userId,
+    id,
   });
 
   if (!userFound.status) {
@@ -201,12 +201,12 @@ exports.deleteUser = async ({ userId }) => {
   setImmediate(async () => {
     try {
       await userModel.findOneAndUpdate(
-        { userId, isDeleted: false },
+        { _id: id, isDeleted: false },
         { $set: { isDeleted: true } },
         { new: true }
       );
 
-      cache.del(`user_id_:${userId}`);
+      cache.del(`user_id_:${id}`);
       cache.del(`user_email_${userFound?.user?.email}`);
     } catch (error) {
       console.error("ERROR IN DELETING USER: ", error);
@@ -242,7 +242,7 @@ exports.getUsers = async ({ page, limit, role, search }) => {
     .find(filters)
     .skip(startIndex)
     .limit(pageSize)
-    .select("userId name email role createdAt");
+    .select("_id userId name email role createdAt");
 
   const totalUsers = await userModel.countDocuments(filters);
 

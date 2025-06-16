@@ -1,6 +1,6 @@
 exports.checkUserAccessibility = (req, res, next) => {
-  const { userId } = req.query;
-  if (req?.role != "admin" && userId != req.userId)
+  const { id } = req.query;
+  if (req?.role != "admin" && id != req.id)
     return res.status(403).json({
       status: false,
       code: 403,

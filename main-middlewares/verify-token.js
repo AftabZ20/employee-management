@@ -18,7 +18,7 @@ exports.authenticateToken = (req, res, next) => {
     }
 
     req.role = data.role;
-    req.userId = data.userId;
+    req.id = data.id;
     next();
   });
 };

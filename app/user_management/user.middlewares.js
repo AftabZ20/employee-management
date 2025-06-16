@@ -22,12 +22,14 @@ exports.verifyUserSignUp = (req, res, next) => {
 };
 
 exports.verifyUserId = (req, res, next) => {
-  const { userId } = req.query;
+  const { id } = req.query;
 
-  if (!userId)
-    return res
-      .status(400)
-      .json({ status: false, code: 400, message: "userId is required" });
+  if (!id)
+    return res.status(400).json({
+      status: false,
+      code: 400,
+      message: "id is required of the user",
+    });
 
   next();
 };

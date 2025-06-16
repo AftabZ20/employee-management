@@ -12,10 +12,10 @@ exports.addUser = async (req, res) => {
 };
 
 exports.getUserByID = async (req, res) => {
-  const { userId } = req.query;
+  const { id } = req.query;
 
   try {
-    const user = await userService.findUserById({ userId });
+    const user = await userService.findUserById({ id });
     return res.status(user.code).json(user);
   } catch (error) {
     return res.status(500).json({ status: false, message: error.message });
@@ -23,7 +23,7 @@ exports.getUserByID = async (req, res) => {
 };
 
 exports.editUser = async (req, res) => {
-  const { userId } = req.query;
+  const { id } = req.query;
   const userData = req.body;
 
   if (req?.role != "admin" && userData.role)
@@ -42,7 +42,7 @@ exports.editUser = async (req, res) => {
   }
 
   try {
-    const user = await userService.editUser({ userId, userData });
+    const user = await userService.editUser({ id, userData });
     return res.status(user.code).json(user);
   } catch (error) {
     return res.status(500).json({ status: false, message: error.message });
@@ -61,10 +61,10 @@ exports.signIn = async (req, res) => {
 };
 
 exports.deleteUser = async (req, res) => {
-  const { userId } = req.query;
+  const { id } = req.query;
 
   try {
-    const user = await userService.deleteUser({ userId });
+    const user = await userService.deleteUser({ id });
     return res.status(user.code).json(user);
   } catch (error) {
     return res.status(500).json({ status: false, message: error.message });
